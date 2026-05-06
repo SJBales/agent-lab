@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Companion</title>
+  <style>
+    body { font-family: system-ui; max-width: 600px; margin: 2rem auto; padding: 1rem; }
+    .msg { padding: 0.75rem 1rem; border-radius: 1rem; margin: 0.5rem 0; max-width: 80%; }
+    .patient { background: #d1e7ff; margin-left: auto; }
+    .agent { background: #f0f0f0; }
+    #thread { display: flex; flex-direction: column; min-height: 60vh; }
+    form { display: flex; gap: 0.5rem; margin-top: 1rem; }
+    input { flex: 1; padding: 0.75rem; font-size: 1rem; }
+    button { padding: 0.75rem 1.5rem; }
+  </style>
+</head>
+<body>
+  <h2>How are you feeling?</h2>
+  <div id="thread"></div>
+  <form id="form">
+    <input id="input" placeholder="Type what's on your mind..." autocomplete="off" required />
+    <button>Send</button>
+  </form>
+
+  <script>
+    const thread = document.getElementById("thread");
+    const form = document.getElementById("form");
+    const input = document.getElementById("input");
+
+    function render(messages) {
+      thread.innerHTML = "";
+      for (const m of messages) {
+        const div = document.createElement("div");
+        div.className = "msg " + m.sender;
+        div.textContent = m.content;
+        thread.appendChild(div);
+      }
+      thread.scrollTop = thread.scrollHeight;
+    }
+
+    async function load() {
+      const res = await fetch("/messages");
+      render(await res.json());
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const content = input.value;
+      input.value = "";
+      input.disabled = true;
+      await fetch("/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content }),
+      });
+      input.disabled = false;
+      input.focus();
+      await load();
+    });
+
+    load();
+  </script>
+</body>
+</html>

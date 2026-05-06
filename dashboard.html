@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Therapist Dashboard</title>
+  <style>
+    body { font-family: system-ui; max-width: 800px; margin: 2rem auto; padding: 1rem; }
+    .msg { padding: 0.5rem 0.75rem; border-left: 3px solid #ccc; margin: 0.5rem 0; }
+    .patient { border-color: #4a90e2; }
+    .agent { border-color: #888; color: #555; }
+    .meta { font-size: 0.75rem; color: #888; }
+    #summary { background: #fffbe6; padding: 1rem; border-radius: 0.5rem; white-space: pre-wrap; }
+    button { padding: 0.5rem 1rem; margin-bottom: 1rem; }
+  </style>
+</head>
+<body>
+  <h1>Patient: Demo Patient</h1>
+
+  <h2>Pre-session brief</h2>
+  <button onclick="loadSummary()">Generate summary</button>
+  <div id="summary">Click to generate.</div>
+
+  <h2>Full transcript</h2>
+  <div id="thread"></div>
+
+  <script>
+    async function loadMessages() {
+      const res = await fetch("/messages");
+      const messages = await res.json();
+      const thread = document.getElementById("thread");
+      thread.innerHTML = messages.map(m => `
+        <div class="msg ${m.sender}">
+          <div class="meta">${m.sender} · ${new Date(m.created_at).toLocaleString()}</div>
+          <div>${m.content}</div>
+        </div>
+      `).join("");
+    }
+
+    async function loadSummary() {
+      document.getElementById("summary").textContent = "Generating...";
+      const res = await fetch("/summary");
+      const data = await res.json();
+      document.getElementById("summary").textContent = data.summary;
+    }
+
+    loadMessages();
+  </script>
+</body>
+</html>
