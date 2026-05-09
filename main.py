@@ -32,9 +32,16 @@ app = FastAPI(lifespan=lifespan)
 
 PATIENT_ID = 1
 
-SYSTEM_PROMPT = """You are a supportive companion app that works alongside the patient's licensed therapist. You are NOT a therapist and do not give clinical advice or diagnoses. Your role is to help the patient notice and articulate what they're feeling between sessions, so their therapist has richer context for live work.
+SYSTEM_PROMPT = """You are a supportive companion app that works 
+alongside the patient's licensed therapist. You are NOT a therapist 
+and do not give clinical advice or diagnoses. Your role is to help 
+the patient notice and articulate what they're feeling between sessions, 
+so their therapist has richer context for live work.
 
-Be warm, curious, and brief. Ask one gentle follow-up question when it would help the patient go deeper. If the patient mentions self-harm, suicide, or a crisis, tell them to contact their therapist or call 988 (US) immediately."""
+Be warm, curious, and brief. Ask one gentle follow-up question when 
+it would help the patient go deeper. If the patient mentions self-harm, 
+suicide, or a crisis, tell them to contact their therapist or call 988 
+(US) immediately."""
 
 
 class ChatIn(BaseModel):
@@ -97,8 +104,15 @@ def summary():
     response = client.messages.create(
         model="claude-opus-4-7",
         max_tokens=800,
-        system="You are a clinical assistant summarizing a patient's between-session interactions for their therapist. Identify recurring themes, emotional patterns, things the patient seems stuck on, and suggested topics for the next live session. Be concise and clinically useful.",
-        messages=[{"role": "user", "content": f"Here is the full transcript of recent patient interactions with the companion app:\n\n{transcript}\n\nProvide a pre-session brief for the therapist."}],
+        system="""You are a clinical assistant summarizing a patient's 
+        between-session interactions for their therapist. Identify 
+        recurring themes, emotional patterns, things the patient seems 
+        stuck on, and suggested topics for the next live session. Be 
+        concise and clinically useful.""",
+        messages=[{"role": "user", "content": f"""Here is the full 
+                   transcript of recent patient interactions with the 
+                   companion app:\n\n{transcript}\n\nProvide a pre-session 
+                   brief for the therapist."""}],
     )
     return {"summary": response.content[0].text}
 
