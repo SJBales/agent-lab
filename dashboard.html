@@ -3,46 +3,123 @@
 <head>
   <title>Therapist Dashboard</title>
   <style>
-    body { font-family: system-ui; max-width: 800px; margin: 2rem auto; padding: 1rem; }
+    body { font-family: system-ui; max-width: 1000px; margin: 2rem auto; padding: 1rem; }
+    h1 { margin-bottom: 0.5rem; }
+    .layout { display: grid; grid-template-columns: 280px 1fr; gap: 1.5rem; }
+    #sessions { border-right: 1px solid #eee; padding-right: 1rem; }
+    #sessions h2 { font-size: 1rem; color: #666; text-transform: uppercase; letter-spacing: 0.05em; }
+    .session-item {
+      padding: 0.6rem 0.75rem; border-radius: 0.5rem; cursor: pointer;
+      border: 1px solid transparent; background: white; text-align: left;
+      font: inherit; width: 100%; margin-bottom: 0.25rem;
+    }
+    .session-item:hover { background: #f0f0f0; }
+    .session-item.active { background: #d1e7ff; border-color: #4a90e2; }
+    .session-meta { font-size: 0.75rem; color: #888; margin-top: 0.2rem; }
+
     .msg { padding: 0.5rem 0.75rem; border-left: 3px solid #ccc; margin: 0.5rem 0; }
     .patient { border-color: #4a90e2; }
     .agent { border-color: #888; color: #555; }
     .meta { font-size: 0.75rem; color: #888; }
-    #summary { background: #fffbe6; padding: 1rem; border-radius: 0.5rem; white-space: pre-wrap; }
-    button { padding: 0.5rem 1rem; margin-bottom: 1rem; }
+    .summary-box {
+      background: #fffbe6; padding: 1rem; border-radius: 0.5rem;
+      white-space: pre-wrap; margin: 0.5rem 0;
+    }
+    button { padding: 0.5rem 1rem; margin-right: 0.5rem; margin-bottom: 0.5rem; }
+    .empty { color: #888; padding: 2rem; text-align: center; }
+    h3 { margin-top: 1.5rem; }
   </style>
 </head>
 <body>
   <h1>Patient: Demo Patient</h1>
 
-  <h2>Pre-session brief</h2>
-  <button onclick="loadSummary()">Generate summary</button>
-  <div id="summary">Click to generate.</div>
+  <div class="layout">
+    <aside id="sessions">
+      <h2>Sessions</h2>
+      <div id="session-list"></div>
+      <h3>Cross-session brief</h3>
+      <button onclick="loadCrossSummary()">Generate</button>
+      <div id="cross-summary" class="summary-box">Click to generate.</div>
+    </aside>
 
-  <h2>Full transcript</h2>
-  <div id="thread"></div>
+    <main id="detail">
+      <div id="empty" class="empty">Select a session to view.</div>
+      <div id="content" hidden>
+        <h2 id="session-title"></h2>
+        <h3>Per-session brief</h3>
+        <button onclick="loadSessionSummary()">Generate</button>
+        <div id="session-summary" class="summary-box">Click to generate.</div>
+
+        <h3>Transcript</h3>
+        <div id="thread"></div>
+      </div>
+    </main>
+  </div>
 
   <script>
-    async function loadMessages() {
-      const res = await fetch("/messages");
+    let currentSessionId = null;
+
+    function fmtDate(iso) {
+      return new Date(iso).toLocaleString();
+    }
+
+    async function loadSessions() {
+      const res = await fetch("/sessions");
+      const sessions = await res.json();
+      const list = document.getElementById("session-list");
+      list.innerHTML = "";
+      for (const s of sessions) {
+        const btn = document.createElement("button");
+        btn.className = "session-item" + (s.id === currentSessionId ? " active" : "");
+        btn.innerHTML = `
+          <div>${s.title || "Session #" + s.id}</div>
+          <div class="session-meta">${fmtDate(s.started_at)} · ${s.message_count} msg</div>
+        `;
+        btn.onclick = () => selectSession(s.id, s.title || `Session #${s.id}`, s.started_at);
+        list.appendChild(btn);
+      }
+      return sessions;
+    }
+
+    async function selectSession(id, title, startedAt) {
+      currentSessionId = id;
+      document.getElementById("empty").hidden = true;
+      document.getElementById("content").hidden = false;
+      document.getElementById("session-title").textContent =
+        `${title} — ${fmtDate(startedAt)}`;
+      document.getElementById("session-summary").textContent = "Click to generate.";
+
+      const res = await fetch(`/sessions/${id}/messages`);
       const messages = await res.json();
       const thread = document.getElementById("thread");
       thread.innerHTML = messages.map(m => `
         <div class="msg ${m.sender}">
-          <div class="meta">${m.sender} · ${new Date(m.created_at).toLocaleString()}</div>
+          <div class="meta">${m.sender} · ${fmtDate(m.created_at)}</div>
           <div>${m.content}</div>
         </div>
       `).join("");
+
+      await loadSessions();
     }
 
-    async function loadSummary() {
-      document.getElementById("summary").textContent = "Generating...";
+    async function loadSessionSummary() {
+      if (!currentSessionId) return;
+      const box = document.getElementById("session-summary");
+      box.textContent = "Generating...";
+      const res = await fetch(`/sessions/${currentSessionId}/summary`);
+      const data = await res.json();
+      box.textContent = data.summary;
+    }
+
+    async function loadCrossSummary() {
+      const box = document.getElementById("cross-summary");
+      box.textContent = "Generating...";
       const res = await fetch("/summary");
       const data = await res.json();
-      document.getElementById("summary").textContent = data.summary;
+      box.textContent = data.summary;
     }
 
-    loadMessages();
+    loadSessions();
   </script>
 </body>
 </html>

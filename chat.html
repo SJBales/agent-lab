@@ -3,30 +3,84 @@
 <head>
   <title>Companion</title>
   <style>
-    body { font-family: system-ui; max-width: 600px; margin: 2rem auto; padding: 1rem; }
+    body { font-family: system-ui; margin: 0; height: 100vh; display: flex; }
+    #sidebar {
+      width: 260px; border-right: 1px solid #ddd; padding: 1rem;
+      display: flex; flex-direction: column; gap: 0.5rem; overflow-y: auto;
+      background: #fafafa;
+    }
+    #sidebar h3 { margin: 0 0 0.5rem 0; font-size: 0.9rem; color: #666; text-transform: uppercase; letter-spacing: 0.05em; }
+    #new-session { padding: 0.6rem; font-size: 0.95rem; cursor: pointer; }
+    .session-item {
+      padding: 0.6rem 0.75rem; border-radius: 0.5rem; cursor: pointer;
+      border: 1px solid transparent; background: white; text-align: left;
+      font: inherit;
+    }
+    .session-item:hover { background: #f0f0f0; }
+    .session-item.active { background: #d1e7ff; border-color: #4a90e2; }
+    .session-meta { font-size: 0.75rem; color: #888; margin-top: 0.2rem; }
+
+    #main { flex: 1; max-width: 700px; margin: 0 auto; padding: 2rem 1rem; display: flex; flex-direction: column; }
     .msg { padding: 0.75rem 1rem; border-radius: 1rem; margin: 0.5rem 0; max-width: 80%; }
     .patient { background: #d1e7ff; margin-left: auto; }
     .agent { background: #f0f0f0; }
-    #thread { display: flex; flex-direction: column; min-height: 60vh; }
+    #thread { display: flex; flex-direction: column; flex: 1; overflow-y: auto; min-height: 50vh; }
+    #empty {
+      color: #888; text-align: center; padding: 2rem;
+    }
     form { display: flex; gap: 0.5rem; margin-top: 1rem; }
     input { flex: 1; padding: 0.75rem; font-size: 1rem; }
     button { padding: 0.75rem 1.5rem; }
+    form[hidden] { display: none; }
   </style>
 </head>
 <body>
-  <h2>How are you feeling?</h2>
-  <div id="thread"></div>
-  <form id="form">
-    <input id="input" placeholder="Type what's on your mind..." autocomplete="off" required />
-    <button>Send</button>
-  </form>
+  <aside id="sidebar">
+    <h3>Sessions</h3>
+    <button id="new-session">+ New session</button>
+    <div id="session-list"></div>
+  </aside>
+
+  <main id="main">
+    <h2 id="header">How are you feeling?</h2>
+    <div id="thread"></div>
+    <div id="empty" hidden>Click <strong>New session</strong> to begin a check-in.</div>
+    <form id="form">
+      <input id="input" placeholder="Type what's on your mind..." autocomplete="off" required />
+      <button>Send</button>
+    </form>
+  </main>
 
   <script>
+    const sessionList = document.getElementById("session-list");
+    const newSessionBtn = document.getElementById("new-session");
     const thread = document.getElementById("thread");
+    const empty = document.getElementById("empty");
     const form = document.getElementById("form");
     const input = document.getElementById("input");
+    const header = document.getElementById("header");
 
-    function render(messages) {
+    let currentSessionId = null;
+
+    function fmtDate(iso) {
+      return new Date(iso).toLocaleString();
+    }
+
+    function renderSessions(sessions) {
+      sessionList.innerHTML = "";
+      for (const s of sessions) {
+        const btn = document.createElement("button");
+        btn.className = "session-item" + (s.id === currentSessionId ? " active" : "");
+        btn.innerHTML = `
+          <div>${s.title || "Session #" + s.id}</div>
+          <div class="session-meta">${fmtDate(s.started_at)} · ${s.message_count} msg</div>
+        `;
+        btn.onclick = () => selectSession(s.id);
+        sessionList.appendChild(btn);
+      }
+    }
+
+    function renderMessages(messages) {
       thread.innerHTML = "";
       for (const m of messages) {
         const div = document.createElement("div");
@@ -37,27 +91,70 @@
       thread.scrollTop = thread.scrollHeight;
     }
 
-    async function load() {
-      const res = await fetch("/messages");
-      render(await res.json());
+    function setActiveState(hasSession) {
+      form.hidden = !hasSession;
+      thread.hidden = !hasSession;
+      empty.hidden = hasSession;
+      header.textContent = hasSession ? "How are you feeling?" : "Welcome";
     }
+
+    async function loadSessions() {
+      const res = await fetch("/sessions");
+      const sessions = await res.json();
+      renderSessions(sessions);
+      return sessions;
+    }
+
+    async function selectSession(id) {
+      currentSessionId = id;
+      setActiveState(true);
+      const res = await fetch(`/sessions/${id}/messages`);
+      renderMessages(await res.json());
+      // Re-render sidebar to update the active highlight
+      const sessions = await loadSessions();
+      // No-op but keeps counts fresh
+      void sessions;
+      input.focus();
+    }
+
+    async function startNewSession() {
+      const res = await fetch("/sessions", { method: "POST" });
+      const session = await res.json();
+      await loadSessions();
+      await selectSession(session.id);
+    }
+
+    newSessionBtn.addEventListener("click", startNewSession);
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
+      if (!currentSessionId) return;
       const content = input.value;
       input.value = "";
       input.disabled = true;
-      await fetch("/chat", {
+      await fetch(`/sessions/${currentSessionId}/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content }),
       });
       input.disabled = false;
       input.focus();
-      await load();
+      const res = await fetch(`/sessions/${currentSessionId}/messages`);
+      renderMessages(await res.json());
+      // Update sidebar message counts
+      await loadSessions();
     });
 
-    load();
+    // Boot: load sessions; if any exist, select the most recent.
+    // If none, show empty state — user must click "New session".
+    (async () => {
+      const sessions = await loadSessions();
+      if (sessions.length > 0) {
+        await selectSession(sessions[0].id);
+      } else {
+        setActiveState(false);
+      }
+    })();
   </script>
 </body>
 </html>
