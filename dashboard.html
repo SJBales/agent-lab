@@ -28,6 +28,12 @@
     button { padding: 0.5rem 1rem; margin-right: 0.5rem; margin-bottom: 0.5rem; }
     .empty { color: #888; padding: 2rem; text-align: center; }
     h3 { margin-top: 1.5rem; }
+    #steering-text {
+      width: 100%; box-sizing: border-box; min-height: 110px;
+      padding: 0.6rem; font: inherit; border: 1px solid #ccc;
+      border-radius: 0.5rem; resize: vertical;
+    }
+    #steering-status { font-size: 0.75rem; color: #888; margin-left: 0.25rem; }
   </style>
 </head>
 <body>
@@ -37,6 +43,15 @@
     <aside id="sessions">
       <h2>Sessions</h2>
       <div id="session-list"></div>
+
+      <h3>Therapist guidance</h3>
+      <textarea id="steering-text"
+        placeholder="e.g. Patient is practicing grounding techniques this week. Gently prompt them to notice body sensations when they mention anxiety."></textarea>
+      <div>
+        <button onclick="saveSteering()">Save guidance</button>
+        <span id="steering-status"></span>
+      </div>
+
       <h3>Cross-session brief</h3>
       <button onclick="loadCrossSummary()">Generate</button>
       <div id="cross-summary" class="summary-box">Click to generate.</div>
@@ -119,7 +134,31 @@
       box.textContent = data.summary;
     }
 
+    async function loadSteering() {
+      const res = await fetch("/steering");
+      const data = await res.json();
+      document.getElementById("steering-text").value = data.guidance || "";
+      const status = document.getElementById("steering-status");
+      status.textContent = data.updated_at
+        ? `Last updated ${fmtDate(data.updated_at)}`
+        : "No guidance set.";
+    }
+
+    async function saveSteering() {
+      const guidance = document.getElementById("steering-text").value;
+      const status = document.getElementById("steering-status");
+      status.textContent = "Saving…";
+      const res = await fetch("/steering", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ guidance }),
+      });
+      const data = await res.json();
+      status.textContent = `Saved · ${fmtDate(data.updated_at)}`;
+    }
+
     loadSessions();
+    loadSteering();
   </script>
 </body>
 </html>
