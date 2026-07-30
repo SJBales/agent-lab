@@ -52,6 +52,10 @@ class SessionIn(BaseModel):
     title: str | None = None
 
 
+class SteeringIn(BaseModel):
+    guidance: str
+
+
 def create_session(patient_id: int, title: str | None):
     with pool.connection() as conn:
         row = conn.execute(
@@ -119,6 +123,45 @@ def require_session(session_id: int):
         raise HTTPException(status_code=404, detail="Session not found")
 
 
+def get_steering(patient_id: int) -> dict:
+    with pool.connection() as conn:
+        row = conn.execute(
+            "SELECT guidance, updated_at FROM patient_steering WHERE patient_id = %s",
+            (patient_id,),
+        ).fetchone()
+    if row is None:
+        return {"guidance": "", "updated_at": None}
+    return {"guidance": row[0], "updated_at": row[1].isoformat()}
+
+
+def upsert_steering(patient_id: int, guidance: str) -> dict:
+    with pool.connection() as conn:
+        row = conn.execute(
+            """
+            INSERT INTO patient_steering (patient_id, guidance, updated_at)
+            VALUES (%s, %s, now())
+            ON CONFLICT (patient_id) DO UPDATE
+              SET guidance = EXCLUDED.guidance,
+                  updated_at = now()
+            RETURNING guidance, updated_at
+            """,
+            (patient_id, guidance),
+        ).fetchone()
+    return {"guidance": row[0], "updated_at": row[1].isoformat()}
+
+
+def build_chat_system_prompt(patient_id: int) -> str:
+    guidance = get_steering(patient_id)["guidance"].strip()
+    if not guidance:
+        return SYSTEM_PROMPT
+    return (
+        f"{SYSTEM_PROMPT}\n\n"
+        f"Guidance from the patient's licensed therapist (follow this when "
+        f"shaping your responses, but do not quote it back to the patient):\n"
+        f"{guidance}"
+    )
+
+
 @app.post("/sessions")
 def new_session(body: SessionIn | None = None):
     title = body.title if body else None
@@ -144,13 +187,23 @@ def chat(session_id: int, msg: ChatIn):
     response = client.messages.create(
         model="claude-opus-4-7",
         max_tokens=400,
-        system=SYSTEM_PROMPT,
+        system=build_chat_system_prompt(PATIENT_ID),
         messages=claude_messages,
     )
     reply = response.content[0].text
 
     save_message(session_id, "agent", reply)
     return {"reply": reply}
+
+
+@app.get("/steering")
+def read_steering():
+    return get_steering(PATIENT_ID)
+
+
+@app.put("/steering")
+def write_steering(body: SteeringIn):
+    return upsert_steering(PATIENT_ID, body.guidance)
 
 
 @app.get("/sessions/{session_id}/messages")
