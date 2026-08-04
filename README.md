@@ -1,7 +1,3 @@
 # Agent Lab
 
-## Problem Statement
-I am going to explore the basics of Pydantic and Langchain by creating an agent to help me manage the TMF.
-
-## Sources
-tmfrefmodel.com
+This is a repo for exploring the main techniques that make agents work like tool use, memory and swarms.
