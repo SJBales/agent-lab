@@ -13,3 +13,7 @@ Jupyter notebooks contain experimentation with langchain and langgraph modules. 
 - agent_memory.ipynb --> techniques for creating and managing agent memory starting with short term
 - swarms.ipynb --> exploring the use of agent swarms (network of smaller, focused agents)
 - multimodal.ipynb --> exploring multimodal (image and audio) inputs to a LLM
+
+## src
+
+- personal_chef.py --> first application of core concepts to create a personal chef agent
