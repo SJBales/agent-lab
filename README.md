@@ -12,3 +12,4 @@ Jupyter notebooks contain experimentation with langchain and langgraph modules. 
 - tools.ipynb --> introduction to how to define and call tools in agents
 - agent_memory.ipynb --> techniques for creating and managing agent memory starting with short term
 - swarms.ipynb --> exploring the use of agent swarms (network of smaller, focused agents)
+- multimodal.ipynb --> exploring multimodal (image and audio) inputs to a LLM
