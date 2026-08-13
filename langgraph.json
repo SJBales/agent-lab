@@ -1,0 +1,7 @@
+{
+    "dependencies": ["."],
+    "graphs": {
+        "agent": "src/personal_chef_deploy.py:agent"
+    },
+    "env": ".env"
+  }
