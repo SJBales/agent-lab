@@ -17,3 +17,4 @@ Jupyter notebooks contain experimentation with langchain and langgraph modules. 
 ## src
 
 - personal_chef.py --> first application of core concepts to create a personal chef agent
+- personal_chef_deploy.py --> modified personal chef for deployment on langgraph
