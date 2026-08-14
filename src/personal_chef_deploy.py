@@ -1,7 +1,6 @@
 # Langchain imports
 from langchain.agents import create_agent
 from langchain.tools import tool
-from langgraph.checkpoint.memory import InMemorySaver
 
 # Helper imports
 from dotenv import load_dotenv
@@ -34,13 +33,9 @@ def web_search(query: str) -> Dict[str, Any]:
     return web_client.search(query)
 
 
-# Memory
-checkpointer = InMemorySaver()
-
 # Defining the agent
 agent = create_agent(
     model='claude-sonnet-5',
     system_prompt=SYS_PROMPT,
-    checkpointer=checkpointer,
     tools=[web_search]
 )
