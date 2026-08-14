@@ -8,3 +8,5 @@ __pycache__/
 
 # LangSmith Studio
 **/.langgraph_api/
+
+.claude
