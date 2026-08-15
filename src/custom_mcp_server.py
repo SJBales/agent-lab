@@ -18,7 +18,7 @@ tavily_client = TavilyClient()
 
 
 @mcp.tool()
-def web_search(query: str) -> Dict[Any, str]:
+def web_search(query: str) -> Dict[str, Any]:
     """Search the web for results"""
 
     results = tavily_client.search(query)
@@ -26,7 +26,7 @@ def web_search(query: str) -> Dict[Any, str]:
     return results
 
 
-@mcp.resource()
+@mcp.resource("github://langchain-ai/langchain-mcp-adapters/main/README.md")
 def github_file():
     """
     Resource for accessing langchain-ai/langchain-mcp-adapters/README.md file
