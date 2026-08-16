@@ -15,10 +15,9 @@ Jupyter notebooks contain experimentation with langchain and langgraph modules. 
 - multimodal.ipynb --> exploring multimodal (image and audio) inputs to a LLM
 
 
-### mcp
+### advanced_concepts
 - mcp.ipynb --> notebook for connecting agents to the custom MCP server
-
-### advanced concepts:
+- context_and_state.ipynb --> notebook for exploring how to configure and supply state to agents
 - swarms.ipynb --> exploring the use of agent swarms (network of smaller, focused agents)
 
 ## src
