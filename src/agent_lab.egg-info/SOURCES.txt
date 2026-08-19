@@ -1,5 +1,6 @@
 README.md
 pyproject.toml
+src/custom_mcp_server.py
 src/personal_chef.py
 src/personal_chef_deploy.py
 src/agent_lab.egg-info/PKG-INFO
