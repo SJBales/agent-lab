@@ -20,6 +20,7 @@ Jupyter notebooks contain experimentation with langchain and langgraph modules. 
 - context_and_state.ipynb --> notebook for exploring how to configure and supply state to agents
 - swarms.ipynb --> exploring the use of agent swarms (network of smaller, focused agents)
 - multiagent_systems.ipynb --> notebook for learning the basics of mutliagent systems
+- wedding_planner.ipynb --> application of advanced concepts to multi-agent system for planning a wedding
 
 ## src
 - personal_chef.py --> first application of core concepts to create a personal chef agent
