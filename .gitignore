@@ -12,3 +12,5 @@ __pycache__/
 .claude
 
 .flake8
+
+*.db
