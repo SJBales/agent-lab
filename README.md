@@ -22,6 +22,9 @@ Jupyter notebooks contain experimentation with langchain and langgraph modules. 
 - multiagent_systems.ipynb --> notebook for learning the basics of mutliagent systems
 - wedding_planner.ipynb --> application of advanced concepts to multi-agent system for planning a wedding
 
+### production_ready
+- managing_long_convos.ipynb --> using middleware to summarize and store long conversations or remove specific messages from the long-running conversation
+
 ## src
 - personal_chef.py --> first application of core concepts to create a personal chef agent
 - personal_chef_deploy.py --> modified personal chef for deployment on langgraph
