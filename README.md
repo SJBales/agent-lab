@@ -24,6 +24,7 @@ Jupyter notebooks contain experimentation with langchain and langgraph modules. 
 
 ### production_ready
 - managing_long_convos.ipynb --> using middleware to summarize and store long conversations or remove specific messages from the long-running conversation
+- hitl.ipynb --> explores the capabilies of human approval of tool use with the contrived example of email responses
 
 ## src
 - personal_chef.py --> first application of core concepts to create a personal chef agent
