@@ -1,6 +1,6 @@
 # Agent Lab
 
-This is a repo for exploring the main techniques that make agents work like tool use, memory, context, state and swarms.
+This is a repo for exploring the main techniques that make agents work like tool use, memory, context, state and swarms. It's a mix of tutorial code and toy applications.
 
 # Structure
 
